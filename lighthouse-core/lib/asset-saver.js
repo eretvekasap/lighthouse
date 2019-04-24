@@ -9,11 +9,13 @@ const fs = require('fs');
 const path = require('path');
 const log = require('lighthouse-logger');
 const stream = require('stream');
-const Simulator = require('./dependency-graph/simulator/simulator');
-const lanternTraceSaver = require('./lantern-trace-saver');
-const Metrics = require('./traces/pwmetrics-events');
+const Simulator = require('./dependency-graph/simulator/simulator.js');
+const lanternTraceSaver = require('./lantern-trace-saver.js');
+const Metrics = require('./traces/pwmetrics-events.js');
 const rimraf = require('rimraf');
 const mkdirp = require('mkdirp');
+const NetworkAnalysisComputed = require('../computed/network-analysis.js');
+const LoadSimulatorComputed = require('../computed/load-simulator.js');
 
 const artifactsFilename = 'artifacts.json';
 const traceSuffix = '.trace.json';
@@ -137,9 +139,8 @@ async function prepareAssets(artifacts, audits) {
 }
 
 /**
- * Generates a JSON representation of traceData line-by-line to avoid OOM due to very large traces.
- * COMPAT: As of Node 9, JSON.parse/stringify can handle 256MB+ strings. Once we drop support for
- * Node 8, we can 'revert' PR #2593. See https://stackoverflow.com/a/47781288/89484
+ * Generates a JSON representation of traceData line-by-line for a nicer printed
+ * version with one trace event per line.
  * @param {LH.Trace} traceData
  * @return {IterableIterator<string>}
  */
@@ -272,6 +273,19 @@ async function logAssets(artifacts, audits) {
   });
 }
 
+/**
+ * @param {LH.DevtoolsLog} devtoolsLog
+ * @param {string} outputPath
+ * @return {Promise<void>}
+ */
+async function saveLanternNetworkData(devtoolsLog, outputPath) {
+  const context = /** @type {LH.Audit.Context} */ ({computedCache: new Map()});
+  const networkAnalysis = await NetworkAnalysisComputed.request(devtoolsLog, context);
+  const lanternData = LoadSimulatorComputed.convertAnalysisToSaveableLanternData(networkAnalysis);
+
+  fs.writeFileSync(outputPath, JSON.stringify(lanternData));
+}
+
 module.exports = {
   saveArtifacts,
   loadArtifacts,
@@ -279,4 +293,5 @@ module.exports = {
   prepareAssets,
   saveTrace,
   logAssets,
+  saveLanternNetworkData,
 };

@@ -41,6 +41,11 @@ class NetworkRequests extends Audit {
         undefined : (time - earliestStartTime) * 1000;
 
       const results = records.map(record => {
+        const endTimeDeltaMs = record.lrStatistics && record.lrStatistics.endTimeDeltaMs;
+        const TCPMs = record.lrStatistics && record.lrStatistics.TCPMs;
+        const requestMs = record.lrStatistics && record.lrStatistics.requestMs;
+        const responseMs = record.lrStatistics && record.lrStatistics.responseMs;
+
         return {
           url: URL.elideDataURI(record.url),
           startTime: timeToMs(record.startTime),
@@ -50,9 +55,14 @@ class NetworkRequests extends Audit {
           statusCode: record.statusCode,
           mimeType: record.mimeType,
           resourceType: record.resourceType,
+          lrEndTimeDeltaMs: endTimeDeltaMs, // Only exists on Lightrider runs
+          lrTCPMs: TCPMs, // Only exists on Lightrider runs
+          lrRequestMs: requestMs, // Only exists on Lightrider runs
+          lrResponseMs: responseMs, // Only exists on Lightrider runs
         };
       });
 
+      /** @type {LH.Audit.Details.Table['headings']} */
       const headings = [
         {key: 'url', itemType: 'url', text: 'URL'},
         {key: 'startTime', itemType: 'ms', granularity: 1, text: 'Start Time'},

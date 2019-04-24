@@ -17,28 +17,28 @@ describe('SEO: description audit', () => {
     const auditResult = Audit.audit({
       MetaElements: [],
     });
-    assert.equal(auditResult.rawValue, false);
+    assert.equal(auditResult.score, 0);
   });
 
   it('fails when HTML contains an empty description meta tag', () => {
     const auditResult = Audit.audit({
       MetaElements: makeMetaElements(''),
     });
-    assert.equal(auditResult.rawValue, false);
-    assert.ok(auditResult.explanation.includes('empty'), auditResult.explanation);
+    assert.equal(auditResult.score, 0);
+    expect(auditResult.explanation).toBeDisplayString('Description text is empty.');
   });
 
   it('fails when description consists only of whitespace', () => {
     const auditResult = Audit.audit({
       MetaElements: makeMetaElements('\t\xa0'),
     });
-    assert.equal(auditResult.rawValue, false);
-    assert.ok(auditResult.explanation.includes('empty'), auditResult.explanation);
+    assert.equal(auditResult.score, 0);
+    expect(auditResult.explanation).toBeDisplayString('Description text is empty.');
   });
 
   it('passes when a description text is provided', () => {
     return assert.equal(Audit.audit({
       MetaElements: makeMetaElements('description text'),
-    }).rawValue, true);
+    }).score, 1);
   });
 });

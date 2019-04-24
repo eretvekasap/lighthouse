@@ -33,12 +33,20 @@ function runA11yChecks() {
     resultTypes: ['violations', 'inapplicable'],
     rules: {
       'tabindex': {enabled: true},
+      'accesskeys': {enabled: true},
       'table-fake-caption': {enabled: false},
       'td-has-header': {enabled: false},
       'marquee': {enabled: false},
       'area-alt': {enabled: false},
+      'aria-dpub-role-fallback': {enabled: false},
+      'aria-hidden-body': {enabled: false},
+      'duplicate-id-active': {enabled: false},
+      'duplicate-id-aria': {enabled: false},
+      'html-xml-lang-mismatch': {enabled: false},
       'blink': {enabled: false},
       'server-side-image-map': {enabled: false},
+      'aria-hidden-focus': {enabled: false},
+      'form-field-multiple-labels': {enabled: false},
     },
     // @ts-ignore
   }).then(axeResult => {

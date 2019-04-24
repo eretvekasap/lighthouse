@@ -94,41 +94,54 @@ describe('ReportRenderer', () => {
         'new report appended to container');
     });
 
-    it('renders a header', () => {
-      const header = renderer._renderReportHeader(sampleResults);
-      assert.ok(header.querySelector('.lh-export'), 'contains export button');
+    it('renders a topbar', () => {
+      const topbar = renderer._renderReportTopbar(sampleResults);
+      assert.equal(topbar.querySelector('.lh-topbar__url').textContent, sampleResults.finalUrl);
+    });
 
-      assert.ok(header.querySelector('.lh-config__timestamp').textContent.match(TIMESTAMP_REGEX),
-          'formats the generated datetime');
-      assert.equal(header.querySelector('.lh-metadata__url').textContent, sampleResults.finalUrl);
-      const url = header.querySelector('.lh-metadata__url');
-      assert.equal(url.textContent, sampleResults.finalUrl);
-      assert.equal(url.href, sampleResults.finalUrl);
+    it('renders a header', () => {
+      const header = renderer._renderReportHeader();
+      assert.ok(header.querySelector('.lh-scores-container'), 'contains score container');
     });
 
     it('renders special score gauges after the mainstream ones', () => {
       const container = renderer._dom._document.body;
       const output = renderer.renderReport(sampleResults, container);
 
-      const allGaugeCount = output
-        .querySelectorAll('.lh-scores-header > a[class*="lh-gauge"]').length;
-      const regularGaugeCount = output
-        .querySelectorAll('.lh-scores-header > .lh-gauge__wrapper').length;
-
-      // Not all gauges are regular.
-      assert.ok(regularGaugeCount < allGaugeCount);
+      const indexOfFirstIrregularGauge = Array.from(output
+        .querySelectorAll('.lh-scores-header > a[class*="lh-gauge"]')).findIndex(el => {
+        return el.matches('.lh-gauge--pwa__wrapper');
+      });
 
       const scoresHeaderElem = output.querySelector('.lh-scores-header');
       for (let i = 0; i < scoresHeaderElem.children.length; i++) {
         const gauge = scoresHeaderElem.children[i];
 
-        if (i < regularGaugeCount) {
-          assert.ok(gauge.classList.contains('lh-gauge__wrapper'));
-        } else {
-          assert.ok(!gauge.classList.contains('lh-gauge__wrapper'));
+        assert.ok(gauge.classList.contains('lh-gauge__wrapper'));
+        if (i >= indexOfFirstIrregularGauge) {
           assert.ok(gauge.classList.contains('lh-gauge--pwa__wrapper'));
         }
       }
+    });
+
+    it('renders plugin score gauge', () => {
+      const sampleResultsCopy = JSON.parse(JSON.stringify(sampleResults));
+      sampleResultsCopy.categories['lighthouse-plugin-someplugin'] = {
+        id: 'lighthouse-plugin-someplugin',
+        title: 'Some Plugin',
+        auditRefs: [],
+      };
+      const container = renderer._dom._document.body;
+      const output = renderer.renderReport(sampleResultsCopy, container);
+      const scoresHeaderElem = output.querySelector('.lh-scores-header');
+
+      const gaugeCount = scoresHeaderElem.querySelectorAll('.lh-gauge').length;
+      const pluginGaugeCount =
+        scoresHeaderElem.querySelectorAll('.lh-gauge__wrapper--plugin').length;
+
+      // 5 core categories + the 1 plugin.
+      assert.equal(6, gaugeCount);
+      assert.equal(1, pluginGaugeCount);
     });
 
     it('should not mutate a report object', () => {
@@ -182,7 +195,8 @@ describe('ReportRenderer', () => {
     assert.equal(renderer._templateContext, otherDocument);
   });
 
-  it('should render an all 100 report with fireworks', () => {
+  // Fireworks temporarily canceled. See #8185
+  test.skip('should render an all 100 report with fireworks', () => {
     const container = renderer._dom._document.body;
 
     sampleResults.reportCategories.forEach(element => {
@@ -197,6 +211,25 @@ describe('ReportRenderer', () => {
         sampleResults.reportCategories.length * 2, 'renders category gauges');
     // fireworks!
     assert.ok(output.querySelector('.score100'), 'has fireworks treatment');
+  });
+
+  it('should add LHR channel to doc link parameters', () => {
+    const lhrChannel = sampleResults.configSettings.channel;
+    // Make sure we have a channel in the LHR.
+    assert.ok(lhrChannel.length > 2);
+
+    const container = renderer._dom._document.body;
+    const output = renderer.renderReport(sampleResults, container);
+
+    const utmChannels = [...output.querySelectorAll('a[href*="utm_source=lighthouse"')]
+      .map(a => new URL(a.href))
+      .filter(url => url.origin === 'https://developers.google.com')
+      .map(url => url.searchParams.get('utm_medium'));
+
+    assert.ok(utmChannels.length > 20);
+    utmChannels.forEach(anchorChannel => {
+      assert.strictEqual(anchorChannel, lhrChannel);
+    });
   });
 
   it('renders `not_applicable` audits as `notApplicable`', () => {

@@ -14,6 +14,8 @@ const Config = require('../../config/config');
 const unresolvedPerfLog = require('./../fixtures/unresolved-perflog.json');
 const NetworkRequest = require('../../lib/network-request.js');
 
+jest.mock('../../lib/stack-collector.js', () => () => Promise.resolve([]));
+
 class TestGatherer extends Gatherer {
   constructor() {
     super();
@@ -33,6 +35,7 @@ class TestGathererNoArtifact extends Gatherer {
 }
 
 const fakeDriver = require('./fake-driver');
+const fakeDriverUsingRealMobileDevice = fakeDriver.fakeDriverUsingRealMobileDevice;
 
 function getMockedEmulationDriver(emulationFn, netThrottleFn, cpuThrottleFn,
   blockUrlFn, extraHeadersFn) {
@@ -40,6 +43,9 @@ function getMockedEmulationDriver(emulationFn, netThrottleFn, cpuThrottleFn,
   const Connection = require('../../gather/connections/connection');
   const EmulationDriver = class extends Driver {
     enableRuntimeEvents() {
+      return Promise.resolve();
+    }
+    enableAsyncStacks() {
       return Promise.resolve();
     }
     assertNoSameOriginServiceWorkerClients() {
@@ -156,6 +162,50 @@ describe('GatherRunner', function() {
     });
   });
 
+  describe('collects TestedAsMobileDevice as an artifact', () => {
+    const url = 'https://example.com';
+
+    it('works when running on desktop device without emulation', async () => {
+      const driver = fakeDriver;
+      const config = new Config({passes: [{}]});
+      const settings = {};
+      const options = {url, driver, config, settings};
+
+      const results = await GatherRunner.run(config.passes, options);
+      expect(results.TestedAsMobileDevice).toBe(false);
+    });
+
+    it('works when running on desktop device with mobile emulation', async () => {
+      const driver = fakeDriver;
+      const config = new Config({passes: [{}]});
+      const settings = {emulatedFormFactor: 'mobile'};
+      const options = {url, driver, config, settings};
+
+      const results = await GatherRunner.run(config.passes, options);
+      expect(results.TestedAsMobileDevice).toBe(true);
+    });
+
+    it('works when running on mobile device without emulation', async () => {
+      const driver = fakeDriverUsingRealMobileDevice;
+      const config = new Config({passes: [{}]});
+      const settings = {};
+      const options = {url, driver, config, settings};
+
+      const results = await GatherRunner.run(config.passes, options);
+      expect(results.TestedAsMobileDevice).toBe(true);
+    });
+
+    it('works when running on mobile device with desktop emulation', async () => {
+      const driver = fakeDriverUsingRealMobileDevice;
+      const config = new Config({passes: [{}]});
+      const settings = {emulatedFormFactor: 'desktop'};
+      const options = {url, driver, config, settings};
+
+      const results = await GatherRunner.run(config.passes, options);
+      expect(results.TestedAsMobileDevice).toBe(false);
+    });
+  });
+
   it('sets up the driver to begin emulation when all emulation flags are undefined', () => {
     const tests = {
       calledDeviceEmulation: false,
@@ -181,35 +231,6 @@ describe('GatherRunner', function() {
         latency: 0, downloadThroughput: 0, uploadThroughput: 0, offline: false,
       });
       assert.ok(!tests.calledCpuEmulation, 'called cpu emulation');
-    });
-  });
-
-  it('stops device emulation when disableDeviceEmulation flag is true', () => {
-    const tests = {
-      calledDeviceEmulation: false,
-      calledNetworkEmulation: false,
-      calledCpuEmulation: false,
-    };
-    const createEmulationCheck = variable => () => {
-      tests[variable] = true;
-      return true;
-    };
-    const driver = getMockedEmulationDriver(
-      createEmulationCheck('calledDeviceEmulation', false),
-      createEmulationCheck('calledNetworkEmulation', true),
-      createEmulationCheck('calledCpuEmulation', true)
-    );
-
-    return GatherRunner.setupDriver(driver, {
-      settings: {
-        disableDeviceEmulation: true,
-        throttlingMethod: 'devtools',
-        throttling: {},
-      },
-    }).then(_ => {
-      assert.equal(tests.calledDeviceEmulation, false);
-      assert.equal(tests.calledNetworkEmulation, true);
-      assert.equal(tests.calledCpuEmulation, true);
     });
   });
 
@@ -315,6 +336,7 @@ describe('GatherRunner', function() {
       setThrottling: asyncFunc,
       dismissJavaScriptDialogs: asyncFunc,
       enableRuntimeEvents: asyncFunc,
+      enableAsyncStacks: asyncFunc,
       cacheNatives: asyncFunc,
       gotoURL: asyncFunc,
       registerPerformanceObserver: asyncFunc,
@@ -374,6 +396,7 @@ describe('GatherRunner', function() {
       setThrottling: asyncFunc,
       dismissJavaScriptDialogs: asyncFunc,
       enableRuntimeEvents: asyncFunc,
+      enableAsyncStacks: asyncFunc,
       cacheNatives: asyncFunc,
       gotoURL: asyncFunc,
       registerPerformanceObserver: asyncFunc,

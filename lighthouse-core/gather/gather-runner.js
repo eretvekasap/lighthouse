@@ -7,6 +7,7 @@
 
 const log = require('lighthouse-logger');
 const manifestParser = require('../lib/manifest-parser.js');
+const stacksGatherer = require('../lib/stack-collector.js');
 const LHError = require('../lib/lh-error.js');
 const URL = require('../lib/url-shim.js');
 const NetworkRecorder = require('../lib/network-recorder.js');
@@ -32,7 +33,7 @@ const Driver = require('../gather/driver.js'); // eslint-disable-line no-unused-
  *     i. assertNoSameOriginServiceWorkerClients
  *     ii. retrieve and save userAgent
  *     iii. beginEmulation
- *     iv. enableRuntimeEvents
+ *     iv. enableRuntimeEvents/enableAsyncStacks
  *     v. evaluateScriptOnLoad rescue native Promise from potential polyfill
  *     vi. register a performance observer
  *     vii. register dialog dismisser
@@ -108,6 +109,7 @@ class GatherRunner {
     await driver.assertNoSameOriginServiceWorkerClients(options.requestedUrl);
     await driver.beginEmulation(options.settings);
     await driver.enableRuntimeEvents();
+    await driver.enableAsyncStacks();
     await driver.cacheNatives();
     await driver.registerPerformanceObserver();
     await driver.dismissJavaScriptDialogs();
@@ -128,7 +130,7 @@ class GatherRunner {
     } catch (err) {
       // Ignore disconnecting error if browser was already closed.
       // See https://github.com/GoogleChrome/lighthouse/issues/1583
-      if (!(/close\/.*status: 500$/.test(err.message))) {
+      if (!(/close\/.*status: (500|404)$/.test(err.message))) {
         log.error('GatherRunner disconnect', err.message);
       }
     }
@@ -395,13 +397,23 @@ class GatherRunner {
    * @return {Promise<LH.BaseArtifacts>}
    */
   static async getBaseArtifacts(options) {
+    const hostUserAgent = (await options.driver.getBrowserVersion()).userAgent;
+
+    const {emulatedFormFactor} = options.settings;
+    // Whether Lighthouse was run on a mobile device (i.e. not on a desktop machine).
+    const IsMobileHost = hostUserAgent.includes('Android') || hostUserAgent.includes('Mobile');
+    const TestedAsMobileDevice = emulatedFormFactor === 'mobile' ||
+      (emulatedFormFactor !== 'desktop' && IsMobileHost);
+
     return {
       fetchTime: (new Date()).toJSON(),
       LighthouseRunWarnings: [],
-      HostUserAgent: (await options.driver.getBrowserVersion()).userAgent,
+      TestedAsMobileDevice,
+      HostUserAgent: hostUserAgent,
       NetworkUserAgent: '', // updated later
       BenchmarkIndex: 0, // updated later
       WebAppManifest: null, // updated later
+      Stacks: [], // updated later
       traces: {},
       devtoolsLogs: {},
       settings: options.settings,
@@ -469,10 +481,17 @@ class GatherRunner {
         }
         await GatherRunner.beforePass(passContext, gathererResults);
         await GatherRunner.pass(passContext, gathererResults);
+
         if (isFirstPass) {
+          // Fetch the manifest, if it exists. Currently must be fetched before gatherers' `afterPass`.
           baseArtifacts.WebAppManifest = await GatherRunner.getWebAppManifest(passContext);
         }
+
         const passData = await GatherRunner.afterPass(passContext, gathererResults);
+
+        if (isFirstPass) {
+          baseArtifacts.Stacks = await stacksGatherer(passContext);
+        }
 
         // Save devtoolsLog, but networkRecords are discarded and not added onto artifacts.
         baseArtifacts.devtoolsLogs[passConfig.passName] = passData.devtoolsLog;
