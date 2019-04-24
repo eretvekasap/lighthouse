@@ -247,7 +247,7 @@ class TraceProcessor {
           pid: navStartEvt.pid,
           tid: navStartEvt.tid,
           frameId,
-        }
+        };
       }
     }
 
