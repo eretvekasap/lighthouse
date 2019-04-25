@@ -282,10 +282,6 @@ class ReportUIFeatures {
    * @param {KeyboardEvent} e
    */
   onKeyUp(e) {
-    if (e.key === 'd') {
-      this._toggleDarkTheme();
-    }
-
     // Ctrl+P - Expands audit details when user prints via keyboard shortcut.
     if ((e.ctrlKey || e.metaKey) && e.keyCode === 80) {
       this.closeExportDropdown();
