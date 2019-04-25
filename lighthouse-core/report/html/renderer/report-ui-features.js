@@ -49,6 +49,14 @@ class ReportUIFeatures {
     this._copyAttempt = false;
     /** @type {HTMLElement} */
     this.exportButton; // eslint-disable-line no-unused-expressions
+    /** @type {HTMLElement} */
+    this.topbarEl; // eslint-disable-line no-unused-expressions
+    /** @type {HTMLElement} */
+    this.scoreScaleEl; // eslint-disable-line no-unused-expressions
+    /** @type {HTMLElement} */
+    this.stickyHeaderEl; // eslint-disable-line no-unused-expressions
+    /** @type {HTMLElement} */
+    this.highlightEl; // eslint-disable-line no-unused-expressions
 
     this.onMediaQueryChange = this.onMediaQueryChange.bind(this);
     this.onCopy = this.onCopy.bind(this);
@@ -57,6 +65,7 @@ class ReportUIFeatures {
     this.onKeyDown = this.onKeyDown.bind(this);
     this.printShortCutDetect = this.printShortCutDetect.bind(this);
     this.onChevronClick = this.onChevronClick.bind(this);
+    this._updateStickyHeaderOnScroll = this._updateStickyHeaderOnScroll.bind(this);
   }
 
   /**
@@ -71,10 +80,13 @@ class ReportUIFeatures {
     this._setupMediaQueryListeners();
     this._setupExportButton();
     this._setupThirdPartyFilter();
+    this._setupStickyHeaderElements();
     this._setUpCollapseDetailsAfterPrinting();
     this._resetUIState();
     this._document.addEventListener('keydown', this.printShortCutDetect);
     this._document.addEventListener('copy', this.onCopy);
+    this._document.addEventListener('scroll', this._updateStickyHeaderOnScroll);
+    window.addEventListener('resize', this._updateStickyHeaderOnScroll);
   }
 
   /**
@@ -195,6 +207,13 @@ class ReportUIFeatures {
     }
 
     return thirdPartyRows;
+  }
+
+  _setupStickyHeaderElements() {
+    this.topbarEl = this._dom.find('.lh-topbar', this._document);
+    this.scoreScaleEl = this._dom.find('.lh-scorescale', this._document);
+    this.stickyHeaderEl = this._dom.find('.lh-sticky-header', this._document);
+    this.highlightEl = this._dom.find('.lh-highlighter', this._document);
   }
 
   /**
@@ -474,6 +493,30 @@ class ReportUIFeatures {
     // cleanup.
     this._document.body.removeChild(a);
     setTimeout(_ => URL.revokeObjectURL(href), 500);
+  }
+
+  _updateStickyHeaderOnScroll() {
+    // Show sticky header when the score scale begins to go underneath the topbar.
+    const topbarBottom = this.topbarEl.getBoundingClientRect().bottom;
+    const scoreScaleTop = this.scoreScaleEl.getBoundingClientRect().top;
+    const showStickyHeader = topbarBottom >= scoreScaleTop;
+
+    // Highlight mini gauge when section is in view.
+    // In view = the last category that starts above the middle of the window.
+    const categoryEls = Array.from(this._document.querySelectorAll('.lh-category'));
+    const categoriesAboveTheMiddle =
+      categoryEls.filter(el => el.getBoundingClientRect().top - window.innerHeight / 2 < 0);
+    const highlightIndex =
+      categoriesAboveTheMiddle.length > 0 ? categoriesAboveTheMiddle.length - 1 : 0;
+
+    // Category order matches gauge order in sticky header.
+    const gaugeWrapperEls = this.stickyHeaderEl.querySelectorAll('.lh-gauge__wrapper');
+    const gaugeToHighlight = gaugeWrapperEls[highlightIndex];
+    const offset = gaugeToHighlight.getBoundingClientRect().left + 'px';
+
+    // Mutate at end to avoid layout thrashing.
+    this.stickyHeaderEl.classList.toggle('lh-sticky-header--visible', showStickyHeader);
+    this.highlightEl.style.left = offset;
   }
 }
 
