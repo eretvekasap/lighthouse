@@ -170,6 +170,7 @@
     --topbar-icon-size: 20px;
   }
 
+  /* Not enough space to adequately show the relative savings bars. */
   .lh-sparkline {
     display: none;
   }
