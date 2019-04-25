@@ -1098,8 +1098,7 @@
                         "version": "2.1.1"
                     }, 
                     {
-                        "name": "WordPress", 
-                        "version": "5.1.1"
+                        "name": "WordPress"
                     }
                 ], 
                 "summary": null, 

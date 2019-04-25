@@ -2621,8 +2621,7 @@
             "npm": "jquery"
           },
           {
-            "name": "WordPress",
-            "version": "5.1.1"
+            "name": "WordPress"
           }
         ],
         "summary": {}
