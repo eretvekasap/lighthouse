@@ -153,7 +153,7 @@ describe('util helpers', () => {
       // Original audit results should be restored.
       const preparedResult = Util.prepareReportResult(clonedSampleResult);
 
-      // Delete stack packs from preparedResult
+      // Delete stack packs from preparedResult; we test it separately below.
       Object.values(preparedResult.audits).forEach(audit => {
         if (audit.stackPacks) {
           delete audit.stackPacks;
