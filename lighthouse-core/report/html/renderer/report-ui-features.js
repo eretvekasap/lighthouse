@@ -114,7 +114,10 @@ class ReportUIFeatures {
 
   _setupThirdPartyFilter() {
     // Some audits should not display the third party filter option.
-    const thirdPartyFilterAuditExclusions = ['uses-rel-preconnect'];
+    const thirdPartyFilterAuditExclusions = [
+      // This audit deals explicitly with third party resources.
+      'uses-rel-preconnect',
+    ];
 
     // get all tables with a text url
     /** @type {Array<HTMLTableElement>} */
