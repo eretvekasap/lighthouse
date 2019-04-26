@@ -791,7 +791,6 @@
       "description": "Collection of useful page vitals.",
       "score": null,
       "scoreDisplayMode": "informative",
-      "numericValue": 1,
       "details": {
         "type": "debugdata",
         "items": [
@@ -2966,6 +2965,7 @@
     "disableStorageReset": false,
     "emulatedFormFactor": "mobile",
     "channel": "cli",
+    "budgets": null,
     "locale": "en-US",
     "blockedUrlPatterns": null,
     "additionalTraceCategories": null,

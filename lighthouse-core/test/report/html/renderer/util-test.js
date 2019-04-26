@@ -163,14 +163,30 @@ describe('util helpers', () => {
       assert.deepStrictEqual(preparedResult.audits, sampleResult.audits);
     });
 
-    it('makes stack pack objects', () => {
+    it('appends stack pack descriptions to auditRefs', () => {
       const clonedSampleResult = JSON.parse(JSON.stringify(sampleResult));
-
-      // Original audit results should be restored.
+      const iconDataURL = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg"%3E%3C/svg%3E';
+      clonedSampleResult.stackPacks = [{
+        id: 'snackpack',
+        title: 'SnackPack',
+        iconDataURL,
+        descriptions: {
+          'unused-css-rules': 'Consider using snacks in packs.',
+        },
+      }];
       const preparedResult = Util.prepareReportResult(clonedSampleResult);
 
-      // Stack Pack should exist
-      assert(preparedResult.audits['unused-css-rules'].stackPacks);
+      const perfAuditRefs = preparedResult.categories.performance.auditRefs;
+      const unusedCssRef = perfAuditRefs.find(ref => ref.id === 'unused-css-rules');
+      assert.deepStrictEqual(unusedCssRef.stackPacks, [{
+        title: 'SnackPack',
+        iconDataURL,
+        description: 'Consider using snacks in packs.',
+      }]);
+
+      // No stack pack on audit wth no stack pack.
+      const interactiveRef = perfAuditRefs.find(ref => ref.id === 'interactive');
+      assert.strictEqual(interactiveRef.stackPacks, undefined);
     });
   });
 });
