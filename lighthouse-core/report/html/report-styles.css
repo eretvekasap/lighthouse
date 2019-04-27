@@ -777,8 +777,10 @@
 }
 
 .lh-audit-group__header span.lh-audit-group__title {
-  flex: 1;
   font-weight: bold;
+}
+.lh-audit-group--metrics .lh-audit-group__header span.lh-audit-group__title {
+  flex: 1;
 }
 
 .lh-audit-group__header span.lh-audit-group__itemcount {
