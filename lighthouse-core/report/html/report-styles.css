@@ -769,7 +769,6 @@
 }
 
 .lh-audit-group__header {
-  display: flex;
   font-size: var(--body-font-size);
   margin: 0 0 var(--lh-audit-group-vpadding);
   /* When the header takes 100% width, the chevron becomes small. */
@@ -778,6 +777,11 @@
 
 .lh-audit-group__header span.lh-audit-group__title {
   font-weight: bold;
+}
+
+/* Pushes the metric description toggle button to the right. */
+.lh-audit-group--metrics .lh-audit-group__header {
+  display: flex;
 }
 .lh-audit-group--metrics .lh-audit-group__header span.lh-audit-group__title {
   flex: 1;
