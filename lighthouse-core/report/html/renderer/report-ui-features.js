@@ -48,6 +48,14 @@ class ReportUIFeatures {
     this.stickyHeaderEl; // eslint-disable-line no-unused-expressions
     /** @type {HTMLElement} */
     this.highlightEl; // eslint-disable-line no-unused-expressions
+    /** @type {HTMLElement} */
+    this.metricDescriptionToggleEl; // eslint-disable-line no-unused-expressions
+    /** @type {HTMLElement} */
+    this.metricDescriptionLessEl; // eslint-disable-line no-unused-expressions
+    /** @type {HTMLElement} */
+    this.metricDescriptionMoreEl; // eslint-disable-line no-unused-expressions
+    /** @type {HTMLElement} */
+    this.metricAuditGroup; // eslint-disable-line no-unused-expressions
 
     this.onMediaQueryChange = this.onMediaQueryChange.bind(this);
     this.onCopy = this.onCopy.bind(this);
@@ -57,6 +65,9 @@ class ReportUIFeatures {
     this.printShortCutDetect = this.printShortCutDetect.bind(this);
     this.onChevronClick = this.onChevronClick.bind(this);
     this._updateStickyHeaderOnScroll = this._updateStickyHeaderOnScroll.bind(this);
+    this._toggleMetricDescription = this._toggleMetricDescription.bind(this);
+    this._setupMetricDescriptionToggleListeners =
+      this._setupMetricDescriptionToggleListeners.bind(this);
   }
 
   /**
@@ -77,6 +88,9 @@ class ReportUIFeatures {
     this._document.addEventListener('copy', this.onCopy);
     this._document.addEventListener('scroll', this._updateStickyHeaderOnScroll);
     window.addEventListener('resize', this._updateStickyHeaderOnScroll);
+
+    this._setupMetricDescriptionToggleElements();
+    this._setupMetricDescriptionToggleListeners();
   }
 
   /**
@@ -138,6 +152,26 @@ class ReportUIFeatures {
     }
 
     this._copyAttempt = false;
+  }
+
+  _setupMetricDescriptionToggleElements() {
+    this.metricDescriptionToggleEl = this._dom.find('.lh-metrics-toggle', this._document);
+    this.metricDescriptionMoreEl = this._dom.find('.lh-metrics-toggle-more', this._document);
+    this.metricDescriptionLessEl = this._dom.find('.lh-metrics-toggle-less', this._document);
+    this.metricAuditGroup = this._dom.find('.lh-audit-group--metrics', this._document);
+  }
+
+  _setupMetricDescriptionToggleListeners() {
+    this.metricDescriptionToggleEl.addEventListener('click', this._toggleMetricDescription);
+    for (const el of this._dom.findAll('.lh-metric', this._document)) {
+      el.addEventListener('click', this._toggleMetricDescription);
+    }
+  }
+
+  _toggleMetricDescription() {
+    this.metricDescriptionMoreEl.classList.toggle('lh-metrics-toggle--active');
+    this.metricDescriptionLessEl.classList.toggle('lh-metrics-toggle--active');
+    this.metricAuditGroup.classList.toggle('lh-audit-group--metrics__show-descriptions');
   }
 
   /**

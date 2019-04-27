@@ -85,6 +85,7 @@
   --color-black-800: #424242;
   --color-black-900: #212121;
   --color-black: #000000;
+  --color-blue: #2962FF;
   --color-green-700: #018642;
   --color-green: #0CCE6B;
   --color-orange-700: #D04900;
@@ -98,6 +99,7 @@
   --env-item-bg: var(--color-black-100);
   --env-name-min-width: 220px;
   --env-tem-padding: 10px 0px;
+  --expandable-padding: 0 0 2px 28px;
   --gauge-circle-size-big: 120px;
   --gauge-circle-size: 96px;
   --header-padding: 20px 0 20px 0;
@@ -157,6 +159,7 @@
     --body-font-size: 14px;
     --body-line-height: 20px;
     --env-name-min-width: 120px;
+    --expandable-padding: 0 0 2px 24px;
     --gauge-circle-size-big: 96px;
     --gauge-circle-size: 72px;
     --header-padding: 16px 0 16px 0;
@@ -463,11 +466,14 @@
 .lh-metric {
   border-bottom: 1px solid var(--report-secondary-border-color);
 }
+.lh-metric:first-of-type {
+  border-top: 1px solid var(--report-secondary-border-color);
+}
 
 .lh-metric__innerwrap {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  font-weight: 500;
   padding: 8px var(--text-indent);
 }
 
@@ -477,10 +483,7 @@
 
 .lh-metric__title {
   flex: 1;
-}
-
-.lh-metric__name {
-  flex: 1;
+  font-weight: 500;
 }
 
 .lh-metrics__disclaimer {
@@ -491,11 +494,54 @@
 }
 
 .lh-metric__description {
+  display: none;
   color: var(--secondary-text-color);
+  padding: var(--expandable-padding);
+}
+.lh-audit-group--metrics__show-descriptions .lh-metric__description {
+  display: block;
 }
 
 .lh-metric__value {
   white-space: nowrap; /* No wrapping between metric value and the icon */
+  font-weight: 500;
+}
+
+.lh-metrics-toggle {
+  display: flex;
+  align-items: center;
+  background-color: #eee;
+  border-radius: 20px;
+  overflow: hidden;
+  width: 74px;
+  height: 28px;
+  cursor: pointer;
+  user-select: none;
+}
+.lh-metrics-toggle div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 5px;
+}
+.lh-metrics-toggle--active {
+  background-color: var(--color-blue);
+}
+.lh-metrics-toggle-lines {
+  fill: #7F7F7F;
+}
+.lh-metrics-toggle--active .lh-metrics-toggle-lines {
+  fill: white;
+}
+.lh-metrics-toggle-less {
+  width: 50%;
+  height: 28px;
+  padding-left: 8px;
+}
+.lh-metrics-toggle-more {
+  width: 50%;
+  height: 28px;
+  padding-right: 8px;
 }
 
 
@@ -723,6 +769,7 @@
 }
 
 .lh-audit-group__header {
+  display: flex;
   font-size: var(--body-font-size);
   margin: 0 0 var(--lh-audit-group-vpadding);
   /* When the header takes 100% width, the chevron becomes small. */
@@ -730,6 +777,7 @@
 }
 
 .lh-audit-group__header span.lh-audit-group__title {
+  flex: 1;
   font-weight: bold;
 }
 

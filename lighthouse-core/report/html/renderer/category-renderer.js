@@ -200,6 +200,11 @@ class CategoryRenderer {
       descriptionEl.classList.add('lh-audit-group__description');
       auditGroupHeader.appendChild(descriptionEl);
     }
+    if (group.title === 'Metrics') {
+      const toggleTmpl = this.dom.cloneTemplate('#tmpl-lh-metrics-toggle', this.templateContext);
+      const toggleEl = this.dom.find('.lh-metrics-toggle', toggleTmpl);
+      auditGroupHeader.appendChild(toggleEl);
+    }
     groupEl.appendChild(auditGroupHeader);
 
     return groupEl;
